@@ -36,6 +36,7 @@ export default class Category extends CatalogPage {
             getCart('/api/storefront/carts?include=lineItems.digitalItems.options,lineItems.physicalItems.options').then(
                 function (data) {
                     if ((data === undefined) || (data.length < 1)) {
+                        console.log("creating cart");
                         createCart(`/api/storefront/carts`, {
                             "lineItems": [
                             {
@@ -133,7 +134,7 @@ export default class Category extends CatalogPage {
     verifyItemsInCart() {
         getCart('/api/storefront/carts?include=lineItems.digitalItems.options,lineItems.physicalItems.options').then(
             function(data) {
-                if ((data) && (data[0].id)) {
+                if ((data[0]) && (data[0].id)) {
                     $('a#removeAllFromCart').show();
                 }
                 else {
