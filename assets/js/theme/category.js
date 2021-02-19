@@ -2,6 +2,7 @@ import { hooks } from '@bigcommerce/stencil-utils';
 import CatalogPage from './catalog';
 import compareProducts from './global/compare-products';
 import FacetedSearch from './common/faceted-search';
+import swal from './global/sweet-alert';
 import { createTranslationDictionary } from '../theme/common/utils/translations-utils';
 
 export default class Category extends CatalogPage {
@@ -27,12 +28,158 @@ export default class Category extends CatalogPage {
         $('a.navList-action').on('click', () => this.setLiveRegionAttributes($('span.price-filter-message'), 'status', 'assertive'));
     }
 
+    //Add the test product from the Special Items page to the cart.
+    //First, verify if a cart exists. If it doesn't, create a new cart and add the item.
+    //Otherwise, add the item to the existing cart.
+    addAllItemsToCart() {
+        $('a#addAllToCart').click(function () {
+            getCart('/api/storefront/carts?include=lineItems.digitalItems.options,lineItems.physicalItems.options').then(
+                function (data) {
+                    if ((data === undefined) || (data.length < 1)) {
+                        createCart(`/api/storefront/carts`, {
+                            "lineItems": [
+                            {
+                                "quantity": 1,
+                                "productId": 112
+                            }
+                        ]});
+                    }
+                    else {
+                        addCartItem(`/api/storefront/carts/`, data[0].id, {
+                            "lineItems": [
+                            {
+                                "quantity": 1,
+                                "productId": 112
+                            }
+                            ]
+                        });
+                    }
+                }
+            );
+
+            function createCart(url, cartItems) {
+                return fetch(url, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json"},
+                    body: JSON.stringify(cartItems),
+                })
+                .then(window.location = '/cart.php');
+            };
+        
+            function getCart(url) {
+                return fetch(url, {
+                    method: "GET",
+                    credentials: "same-origin"
+                })
+                .then(response => response.json());
+            };
+
+            function addCartItem(url, cartId, cartItems) {
+                return fetch(url + cartId + '/items', {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json"},
+                    body: JSON.stringify(cartItems),
+                })
+                .then(window.location = '/cart.php')
+            };
+        });
+    }
+
+    //Verifies if a cart exists and deletes it. 
+    //A sweet alert message notifies the user when emptying the cart.
+    removeAllItemsFromCart() {
+        $('a#removeAllFromCart').click(function () {
+            getCart('/api/storefront/carts?include=lineItems.digitalItems.options,lineItems.physicalItems.options').then(
+                function(data) {
+                    console.log(data);
+                    deleteCart(`/api/storefront/carts/`, data[0].id)
+                    .then($('a#removeAllFromCart').hide());
+                }
+            );
+                    
+            function getCart(url) {
+                return fetch(url, {
+                    method: "GET",
+                    credentials: "same-origin"
+                })
+                .then(response => response.json());
+            };
+
+            function deleteCart(url, cartId) {
+                return fetch(url + cartId, {
+                    method: "DELETE",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",}
+                })
+                .then(function () {
+                    swal.fire({
+                        text: "All items have been removed from your cart!",
+                        icon: 'success'
+                    });
+
+                    window.location = '/cart.php';
+                });
+            }
+        });
+    }
+
+    //Verify if items have been added to a cart.
+    //Show or hide the Remove All Items button based on the result.
+    verifyItemsInCart() {
+        getCart('/api/storefront/carts?include=lineItems.digitalItems.options,lineItems.physicalItems.options').then(
+            function(data) {
+                if ((data) && (data[0].id)) {
+                    $('a#removeAllFromCart').show();
+                }
+                else {
+                    $('a#removeAllFromCart').hide()
+                }
+            }
+        );
+
+        function getCart(url) {
+            return fetch(url, {
+                method: "GET",
+                credentials: "same-origin"
+            })
+            .then(response => response.json());
+        };
+    }
+
+    //Show second image when hovering over a product card.
+    changeImageOnHover() {
+        $('.card-figure').hover(
+            function() {
+                var mainImage = $(this).find('.card-img-container img');
+                var alternateImage = $(this).find('.card-img-container').data('alternate-image');
+
+                if ((alternateImage) && (alternateImage != "")) {
+                    mainImage.attr('srcset', alternateImage)
+                }
+            },
+            function() {
+                var mainImage = $(this).find('.card-img-container img');
+
+                mainImage.attr('srcset', mainImage.attr('src'));
+            }
+        );
+    }
+
     onReady() {
         this.arrangeFocusOnSortBy();
 
         $('[data-button-type="add-cart"]').on('click', (e) => this.setLiveRegionAttributes($(e.currentTarget).next(), 'status', 'polite'));
 
-        this.makeShopByPriceFilterAccessible();
+        //BigCommerce test functions.
+        this.addAllItemsToCart();
+        this.changeImageOnHover();
+        this.removeAllItemsFromCart();
+        this.verifyItemsInCart();
 
         compareProducts(this.context.urls);
 

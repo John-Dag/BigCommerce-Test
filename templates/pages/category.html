@@ -16,7 +16,6 @@ category:
 {{/partial}}
 
 {{#partial "page"}}
-
 {{> components/common/breadcrumbs breadcrumbs=breadcrumbs}}
 {{#if category.image}}
     {{> components/common/responsive-img
@@ -32,6 +31,14 @@ category:
 {{/unless}}
 {{{category.description}}}
 <div class="page">
+    {{inject ""}}
+    {{#if customer}}
+        <h1 style="text-align: center; margin: 0">{{customer.name}}</h1>
+        <h4 style="text-align: center; margin: 0">{{customer.email}}</h4>
+        <h4 style="text-align: center; margin: 0">{{customer.phone}}</h4>
+    {{/if}}
+    <a class="button button--small add-all-to-cart" id="addAllToCart">{{lang 'products.add_all_to_cart'}}</a>
+    <a class="button button--small remove-all-from-cart" style="display: none" id="removeAllFromCart">{{lang 'products.remove_all_from_cart'}}</a>
     {{#if category.faceted_search_enabled}}
         <aside class="page-sidebar" id="faceted-search-container">
             {{> components/category/sidebar}}
