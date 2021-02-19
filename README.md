@@ -1,6 +1,8 @@
 # Cornerstone BigCommerce Test
 
 Please see the initial commit for all changes. Also, see below for notes regarding the implementation.
+I noticed the server was returning a 503 Service Unavailable error when trying to create a cart via the API. One way around this
+is to add the item to the cart via the "Add Cart" via the product card, and then test the "Add All To Cart" functionality.
 
 Notes:
 1. CSS was included in the category.html file. Normally, I'd include this in a style sheet.
